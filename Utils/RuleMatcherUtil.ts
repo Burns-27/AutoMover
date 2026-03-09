@@ -1,6 +1,6 @@
 import type { MovingRule } from "Models/MovingRule";
 import { ProjectRule } from "Models/ProjectRule";
-import type { TagCache, TFile } from "obsidian";
+import type { TFile } from "obsidian";
 
 class RuleMatcherUtil {
   private static instance: RuleMatcherUtil;
@@ -64,7 +64,7 @@ class RuleMatcherUtil {
    * @param rules
    * @returns MovingRule | null
    */
-  public getMatchingRuleByTag(tags: TagCache[], rules: MovingRule[]): MovingRule | null {
+  public getMatchingRuleByTag(tags: string[], rules: MovingRule[]): MovingRule | null {
     for (const rule of rules) {
       if (rule.regex == null || rule.regex === "") {
         console.error("Tag Rule does not have a regex: ", rule);
@@ -81,7 +81,7 @@ class RuleMatcherUtil {
 
       const regex = this.getCompiledRegex(rule.regex);
       for (const tag of tags) {
-        if (regex.test(tag.tag)) {
+        if (regex.test(tag)) {
           return rule;
         }
       }
@@ -104,11 +104,11 @@ class RuleMatcherUtil {
     return matches;
   }
 
-  public getGroupMatchesForTags(tags: TagCache[], rule: MovingRule): RegExpMatchArray | null {
+  public getGroupMatchesForTags(tags: string[], rule: MovingRule): RegExpMatchArray | null {
     const regex = this.getCompiledRegex(rule.regex);
     // console.log("Compiled regex: ", regex);
     for (const tag of tags) {
-      const matches = tag.tag.match(regex);
+      const matches = tag.match(regex);
       if (matches) {
         return matches;
       }

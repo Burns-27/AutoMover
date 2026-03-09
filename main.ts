@@ -137,7 +137,9 @@ export default class AutoMoverPlugin extends obsidian.Plugin {
    * @returns true if the file was moved, false otherwise
    */
   matchAndMoveByTag(file: obsidian.TFile): boolean {
-    const tags = this.app.metadataCache.getFileCache(file)?.tags;
+    const cache = this.app.metadataCache.getFileCache(file);
+    if (cache == null) return false;
+    const tags = obsidian.getAllTags(cache);
     if (tags == null || tags.length === 0) return false;
 
     const tagRule = ruleMatcherUtil.getMatchingRuleByTag(tags, this.settings.tagRules);
