@@ -247,7 +247,6 @@ export default class AutoMoverPlugin extends obsidian.Plugin {
 		return true;
 	}
 	matchAndMoveByCategory(file: obsidian.TFile): boolean {
-		console.log("Match and Move By Category Found");
 		const cache = this.app.metadataCache.getFileCache(file);
 		if (cache == null) return false;
 		if (cache.frontmatter == null) return false;
@@ -258,7 +257,6 @@ export default class AutoMoverPlugin extends obsidian.Plugin {
 			return false;
 		const categoryName: string =
 			cache.frontmatter.Category || cache.frontmatter.category;
-
 		const categoryRule = categoryMatcherUtil.getMatchingCategoryRule(
 			categoryName,
 			this.settings.categoryRules,
@@ -267,15 +265,13 @@ export default class AutoMoverPlugin extends obsidian.Plugin {
 
 		// If no rules defined, move to project root
 		if (categoryRule.rules == null || categoryRule.rules.length === 0) {
-			console.log("No rules defined, moving to project root");
+			console.log("No Category rules defined, moving to root");
 			movingUtil.moveFile(file, categoryRule.folder);
 			return true;
 		}
 		// if no type defined move to category root
-		if (cache.frontmatter.Type == null || cache.frontmatter.type) {
-			console.log(
-				"No matching rule or './' destination, moving to project root",
-			);
+		if (cache.frontmatter.Type == null && cache.frontmatter.type == null) {
+			console.log("No Type Listed, moving to root");
 			movingUtil.moveFile(file, categoryRule.folder);
 			return true;
 		}
@@ -289,9 +285,7 @@ export default class AutoMoverPlugin extends obsidian.Plugin {
 
 		// If no rule matches or folder is "./", move to project root
 		if (rule == null || rule.folder === "./") {
-			console.log(
-				"No matching rule or './' destination, moving to project root",
-			);
+			console.log("No Type Rule, Moving to root");
 			movingUtil.moveFile(file, categoryRule.folder);
 			return true;
 		}
@@ -302,7 +296,6 @@ export default class AutoMoverPlugin extends obsidian.Plugin {
 				rule.folder,
 			);
 		movingUtil.moveFile(file, finalDestinationPath);
-
 		return true;
 	}
 
