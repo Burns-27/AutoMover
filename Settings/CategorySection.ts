@@ -132,7 +132,7 @@ export function CategorySection(
 		 * List of category rules
 		 */
 		for (const rule of category.rules) {
-			const child = movingRules.createDiv({ cls: "category_rule" });
+			const child = movingRules.createDiv({ cls: "project_rule" });
 			child.createEl("input", {
 				value: rule.TypeName,
 				cls: "rule_input",
