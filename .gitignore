@@ -207,3 +207,4 @@ tmp
 scratch*.{js,ts,tsx,cjs,mjs}
 
 *.bun-build
+AutoMover.code-workspace
