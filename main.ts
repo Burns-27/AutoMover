@@ -9,6 +9,9 @@ import categoryMatcherUtil from "Utils/CategoryMatcherUtil";
 import typeMatcherUtil from "Utils/TypeMatcherUtil";
 import * as obsidian from "obsidian";
 import projectMatcherUtil from "Utils/ProjectMatcherUtil";
+import propertyUtil from "Utils/PropertyUtil";
+import { Classification } from "Models/ClassificationType";
+import { CategoryRule } from "Models/CategoryRule";
 
 export default class AutoMoverPlugin extends obsidian.Plugin {
 	settings!: Settings.AutoMoverSettings;
@@ -249,54 +252,24 @@ export default class AutoMoverPlugin extends obsidian.Plugin {
 		return true;
 	}
 	matchAndMoveByCategory(file: obsidian.TFile): boolean {
+		//get the relevant properties from the file
 		const cache = this.app.metadataCache.getFileCache(file);
 		if (cache == null) return false;
 		if (cache.frontmatter == null) return false;
-		if (
-			cache.frontmatter.Category == null &&
-			cache.frontmatter.category == null
-		)
-			return false;
-		const categoryName: string =
-			cache.frontmatter.Category || cache.frontmatter.category;
-		const categoryRule = categoryMatcherUtil.getMatchingCategoryRule(
-			categoryName,
-			this.settings.categoryRules,
-		);
-		if (categoryRule == null || categoryRule.folder == null) return false;
+		const properties =this.settings.properties;
+		const classification:Classification = propertyUtil.getClassification(properties, cache.frontmatter);
+		//checks if file has the category property
+		if (classification.category){
+			return false
+		}
+		//get and check for matching category rule and folder
+		const categoryRule:CategoryRule|false = categoryMatcherUtil.getMatchingCategoryRule(properties.category, this.settings.categoryRules);
+		if (!categoryRule || !categoryRule.folder){
+			return false
+		}
+		//get and check for matching subcategory rule and folder 
 
-		// If no rules defined, move to project root
-		if (categoryRule.rules == null || categoryRule.rules.length === 0) {
-			console.log("No Category rules defined, moving to root");
-			movingUtil.moveFile(file, categoryRule.folder);
-			return true;
-		}
-		// if no type defined move to category root
-		if (cache.frontmatter.Type == null && cache.frontmatter.type == null) {
-			console.log("No Type Listed, moving to root");
-			movingUtil.moveFile(file, categoryRule.folder);
-			return true;
-		}
-		//get type and matching type rule
-		const typeName: string =
-			cache.frontmatter.type || cache.frontmatter.Type;
-		const rule = typeMatcherUtil.getMatchingTypeRule(
-			typeName,
-			categoryRule.rules,
-		);
-
-		// If no rule matches or folder is "./", move to project root
-		if (rule == null || rule.folder === "./") {
-			console.log("No Type Rule, Moving to root");
-			movingUtil.moveFile(file, categoryRule.folder);
-			return true;
-		}
-		// console.log("Project rule's moving rule found: ", rule);
-		const finalDestinationPath =
-			categoryMatcherUtil.constructCategoryDestinationPath(
-				categoryRule,
-				rule.folder,
-			);
+		
 		movingUtil.moveFile(file, finalDestinationPath);
 		return true;
 	}

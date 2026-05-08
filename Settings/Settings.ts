@@ -11,9 +11,12 @@ export interface AutoMoverSettings {
 	exclusionRules: ExclusionRule[];
 	tagRules: MovingRule[];
 	projectRules: ProjectRule[];
-	categoryProperty:string;
-	subcategoryProperty:string;
-	typeProperty:string;
+	properties:{
+		category:string;
+	subcategory:string;
+	type:string;
+	}
+	
 	categoryRules: CategoryRule[];
 	automaticMoving: boolean;
 	timer: number | null; // in miliseconds
@@ -35,9 +38,12 @@ export const DEFAULT_SETTINGS: Partial<AutoMoverSettings> = {
 	exclusionRules: [],
 	tagRules: [],
 	projectRules: [],
-	categoryProperty:"Category",
-	subcategoryProperty:"Subcategory",
-	typeProperty:"type",
+	properties:{
+		category:"Category",
+	subcategory:"Subcategory",
+	type:"type",
+	},
+	
 	categoryRules: [],
 	automaticMoving: false,
 	timer: null,
