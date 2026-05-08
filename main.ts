@@ -11,7 +11,7 @@ import * as obsidian from "obsidian";
 import projectMatcherUtil from "Utils/ProjectMatcherUtil";
 
 export default class AutoMoverPlugin extends obsidian.Plugin {
-	settings: Settings.AutoMoverSettings;
+	settings!: Settings.AutoMoverSettings;
 
 	async onload() {
 		// console.log("loading plugin");
@@ -32,6 +32,7 @@ export default class AutoMoverPlugin extends obsidian.Plugin {
 		if (!this.areThereRulesToApply()) return;
 
 		this.registerEvent(
+			//@ts-ignore
 			this.app.workspace.on("file-open", (file: obsidian.TFile) => {
 				if (!this.settings.moveOnOpen) return;
 				if (file == null || file.path == null) return;
@@ -42,6 +43,7 @@ export default class AutoMoverPlugin extends obsidian.Plugin {
 
 		this.registerEvent(
 			// since i am defining my own event, ts-lint is crying about it but it works in the end
+			//@ts-expect-error
 			this.app.workspace.on("AutoMover:automatic-moving-update", () => {
 				// console.log("Automatic moving update");
 				this.automaticMoving();
