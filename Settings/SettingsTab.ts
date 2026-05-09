@@ -50,7 +50,7 @@ export class SettingsTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName("Move on open")
-			.setDesc("Should the file be moved when it is opened? TESTTTT")
+			.setDesc("Should the file be moved when it is opened")
 			.addToggle((cb) =>
 				cb
 					.setValue(this.plugin.settings.moveOnOpen)
@@ -169,7 +169,7 @@ export class SettingsTab extends PluginSettingTab {
 		example1.createSpan({ text: "Scrolls", cls: "rule_title" });
 
 		description.createSpan({
-			text: "CHECKING IF SYNC IS WORKIN::::::To move files containing the word 'Scroll' and a number to space -> to a folder named 'Scrolls' under the subfolder of the scroll number: ",
+			text: "To move files containing the word 'Scroll' and a number to space -> to a folder named 'Scrolls' under the subfolder of the scroll number: ",
 		});
 		const example2 = description.createDiv({ cls: "rule margig_right" });
 		example2.createSpan({ text: "Scroll (\\d+)", cls: "rule_title" });

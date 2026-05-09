@@ -1,4 +1,5 @@
 import { CategoryRule } from "Models/CategoryRule";
+import { SubcategoryRule } from "Models/SubcategoryRule";
 
 class CategoryMatcherUtil {
 	private static instance: CategoryMatcherUtil;
@@ -22,15 +23,13 @@ class CategoryMatcherUtil {
 	public getMatchingCategoryRule(
 		categoryName: string,
 		categoryRules: CategoryRule[],
-	): CategoryRule | null {
-		for (const categoryRule of categoryRules) {
-			if (categoryRule.CategoryName === categoryName) {
-				return categoryRule;
-			}
-		}
-		return null;
+	): CategoryRule | false {
+		const rule = categoryRules.find((c)=>c.categoryName)
 	}
-
+	public getMatchingSubcategoryRule(subcategoryName:string,subcategoryRules:SubcategoryRule[] ):SubcategoryRule|false{
+		const rule= subcategoryRules.find((s)=>s.SubcategoryName === subcategoryName)||false;
+		return rule
+	}
 	/**
 	 * Prepends the project folder to the destination path
 	 * and checks whether the project folder ends with a slash

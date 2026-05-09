@@ -1,7 +1,6 @@
-import * as obsidian from "obsidian";
+
 import type AutoMoverPlugin from "main";
-import { CategoryRule } from "Models/CategoryRule";
-import { TypeRule } from "Models/TypeRule";
+import PropertyRule from "Models/PropertyRule";
 
 export function CategorySection(
 	containerEl: HTMLElement,
@@ -23,36 +22,47 @@ export function CategorySection(
 	 * Header for project folders
 	 */
 	const CategoryRuleContainer = containerEl.createDiv({
-		cls: "moving_rules_container",
+		cls: "category",
 	});
 
 	// Class used from obdsidian's css for consistency
 	const categoryRuleDetails = CategoryRuleContainer.createEl("details", {});
 	categoryRuleDetails.createEl("summary", {
-		text: "category rules",
+		text: "Category Rules",
 		cls: ["setting-item-heading"],
 	});
-
+	
 	categoryRuleDetails.open = !plugin.settings.collapseSections.categoryRules;
 	categoryRuleDetails.addEventListener("toggle", async () => {
 		plugin.settings.collapseSections.categoryRules =
 			!categoryRuleDetails.open;
 		await plugin.saveData(plugin.settings);
 	});
+	//Category explanation setting
+	const categoryExplanation = CategoryRuleContainer.createEl("details",{
+		text:"How to use category rules",
+		cls:['category-subheading']
+	})
+	categoryExplanation.open = !plugin.settings.collapseSections.categoryExplanation;
+	categoryExplanation.addEventListener("toggle",async ()=>{
+		plugin.settings.collapseSections.categoryExplanation = !categoryExplanation.open;
+		await plugin.saveData(plugin.settings);
+	})
+	categoryExplanation.createEl("p",{text:"This is just me testing how this works. not sure how this will go."})
 
 	const categoryList = categoryRuleDetails.createDiv({
-		cls: "rule_list",
+		cls: "category-rule-container",
 	});
 	const categoryHeader = categoryList.createDiv({
-		cls: "rule margig_right",
+		cls: "category-heading-container",
 	});
 	categoryHeader.createEl("p", {
 		text: "category name",
-		cls: "rule_title",
+		cls: "category-heading",
 	});
 	categoryHeader.createEl("p", {
 		text: "Destination",
-		cls: "rule_title",
+		cls: "category-heading",
 	});
 
 	const addCategoryButton = categoryHeader.createEl("button", {
@@ -60,16 +70,15 @@ export function CategorySection(
 		cls: "rule_button",
 	});
 	addCategoryButton.addEventListener("click", () => {
-		plugin.settings.categoryRules.push(new CategoryRule());
+		plugin.settings.categoryRules.push(new PropertyRule());
 		display();
 	});
 
 	/**
 	 * List of category
 	 */
-	for (const category of plugin.settings.categoryRules as CategoryRule[]) {
-		const child = categoryList.createDiv({ cls: "category" });
-
+	for (const category of plugin.settings.categoryRules as PropertyRule[]) {
+		const child = categoryList.createDiv({ cls: "category-rule" });
 		// Class used from obdsidian's css for consistency
 		const movingRulesDetails = child.createEl("details", {});
 		const movingRulesSummary = movingRulesDetails.createEl("summary", {
@@ -83,10 +92,10 @@ export function CategorySection(
 		});
 
 		movingRulesSummary.createEl("input", {
-			value: category.CategoryName,
+			value: category.Name,
 			cls: "rule_input",
 		}).onchange = (e) => {
-			category.CategoryName = (e.target as HTMLInputElement).value;
+			category.Name = (e.target as HTMLInputElement).value;
 			debouncedSave();
 		};
 		movingRulesSummary.createEl("input", {
@@ -102,7 +111,7 @@ export function CategorySection(
 			cls: "rule_button",
 		});
 		addRuleButton.addEventListener("click", () => {
-			category.rules.push(new TypeRule());
+			category.rules.push(new PropertyRule());
 			display();
 		});
 
@@ -112,7 +121,7 @@ export function CategorySection(
 		});
 		duplicateRuleButton.addEventListener("click", () => {
 			plugin.settings.categoryRules.push(
-				new CategoryRule(category.CategoryName, category.folder),
+				new PropertyRule(category.Name, category.folder),
 			);
 			display();
 		});
@@ -134,10 +143,10 @@ export function CategorySection(
 		for (const rule of category.rules) {
 			const child = movingRules.createDiv({ cls: "project_rule" });
 			child.createEl("input", {
-				value: rule.TypeName,
+				value: rule.Name,
 				cls: "rule_input",
 			}).onchange = (e) => {
-				rule.TypeName = (e.target as HTMLInputElement).value;
+				rule.Name = (e.target as HTMLInputElement).value;
 				debouncedSave();
 			};
 			child.createEl("input", {
@@ -153,7 +162,7 @@ export function CategorySection(
 				cls: "rule_button rule_button_duplicate",
 			});
 			duplicateRuleButton.addEventListener("click", () => {
-				category.rules.push(new TypeRule(rule.TypeName, rule.folder));
+				category.rules.push(new PropertyRule(rule.Name, rule.folder));
 				display();
 			});
 

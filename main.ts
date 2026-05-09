@@ -5,13 +5,11 @@ import exclusionMatcherUtil from "Utils/ExclusionMatcherUtil";
 import movingUtil from "Utils/MovingUtil";
 import ruleMatcherUtil from "Utils/RuleMatcherUtil";
 import timerUtil from "Utils/TimerUtil";
-import categoryMatcherUtil from "Utils/CategoryMatcherUtil";
-import typeMatcherUtil from "Utils/TypeMatcherUtil";
 import * as obsidian from "obsidian";
 import projectMatcherUtil from "Utils/ProjectMatcherUtil";
 import propertyUtil from "Utils/PropertyUtil";
 import { Classification } from "Models/ClassificationType";
-import { CategoryRule } from "Models/CategoryRule";
+import PropertyRule from "Models/PropertyRule";
 
 export default class AutoMoverPlugin extends obsidian.Plugin {
 	settings!: Settings.AutoMoverSettings;
@@ -259,21 +257,68 @@ export default class AutoMoverPlugin extends obsidian.Plugin {
 		const properties =this.settings.properties;
 		const classification:Classification = propertyUtil.getClassification(properties, cache.frontmatter);
 		//checks if file has the category property
-		if (classification.category){
+		if (!classification.category){
 			return false
 		}
 		//get and check for matching category rule and folder
-		const categoryRule:CategoryRule|false = categoryMatcherUtil.getMatchingCategoryRule(properties.category, this.settings.categoryRules);
+		const categoryRule:PropertyRule|false = propertyUtil.getMatchingPropertyRule(classification.category,this.settings.categoryRules)
 		if (!categoryRule || !categoryRule.folder){
 			return false
 		}
-		//get and check for matching subcategory rule and folder 
 
+		//check if Category has subcategories, or move to root
+		const categoryRuleIO = this.checkAndMoveProperty(file, categoryRule)
+		if(categoryRuleIO) return true
+
+		//Check for defined Subcategory or move to category folder
+		if(!classification.subcategory){
+			movingUtil.moveFile(file,categoryRule.folder)
+			console.debug(`No subcategory listed, moving to category folder`)
+			return true
+		}
 		
-		movingUtil.moveFile(file, finalDestinationPath);
+		//Check for matching subtype rule, or move to category folder. 
+		const subtypeRule = propertyUtil.getMatchingPropertyRule(classification.subcategory, categoryRule.rules)
+		if(!subtypeRule){
+			movingUtil.moveFile(file, categoryRule.folder)
+			return true
+		}
+		//check if subcategory has types defined, or move to subcategory folder. 
+		const subtypeIO = this.checkAndMoveProperty(file,subtypeRule,categoryRule.folder)
+		if(subtypeIO) return true
+		//TODO Set up type Moving
+const subcategoryDest = `${categoryRule.folder}/${subtypeRule.folder}`
+		//check if there is a defined type, or send to subcategory folder. 
+		if(!classification.type){
+			movingUtil.moveFile(file, subcategoryDest)
+			return true
+		}
+		//check for matching type rule, if no matching type rule, move to subcategory folder, else move to type folder. 
+		const typeRule = propertyUtil.getMatchingPropertyRule(classification.type, subtypeRule.rules)
+		if(!typeRule){
+			movingUtil.moveFile(file, subcategoryDest)
+			return true
+		}
+		if(typeRule && typeRule.folder){
+			movingUtil.moveFile(file, `${subcategoryDest}/${typeRule.folder}`)
+			return true
+		}
+		
 		return true;
 	}
-
+	private checkAndMoveProperty(file:obsidian.TFile,rule:PropertyRule,path?:string):boolean{
+		if(!rule.rules||rule.rules.length === 0){
+			if(path){
+				const destination = propertyUtil.constructPath(path,rule.folder)
+				movingUtil.moveFile(file, destination)
+			}else{
+				movingUtil.moveFile(file, rule.folder)
+			}
+			console.debug(`No rules defined, moving to property rule folder`)
+			return true
+		}
+		return false
+	}
 	async asyncloadSettings() {
 		this.settings = Object.assign(
 			{},

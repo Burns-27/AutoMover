@@ -1,4 +1,5 @@
 import { Classification } from "Models/ClassificationType";
+import PropertyRule from "Models/PropertyRule";
 import { FrontMatterCache } from "obsidian";
 
 class PropertyUtil {
@@ -22,6 +23,17 @@ class PropertyUtil {
       category:categoryValue,
       subcategory:subcategoryValue,
       type:typeValue,
+    }
+  }
+  public getMatchingPropertyRule(name:string,propertiesRules:PropertyRule[]):PropertyRule|false{
+    const rule = propertiesRules.find((r)=>r.Name === name)||false
+    return rule
+  }
+  public constructPath(root:string, folder:string):string{
+    if(root.endsWith("/")){
+      return `${root}${folder}`
+    }else{
+      return `${root}/${folder}`
     }
   }
 }

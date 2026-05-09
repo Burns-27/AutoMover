@@ -1,8 +1,9 @@
 //import type AutoMoverPlugin from "main";
-import { CategoryRule } from "Models/CategoryRule";
+
 import type { ExclusionRule } from "Models/ExclusionRule";
 import type { MovingRule } from "Models/MovingRule";
 import { ProjectRule } from "Models/ProjectRule";
+import PropertyRule from "Models/PropertyRule";
 
 export interface AutoMoverSettings {
 	moveOnOpen: boolean;
@@ -17,7 +18,7 @@ export interface AutoMoverSettings {
 	type:string;
 	}
 	
-	categoryRules: CategoryRule[];
+	categoryRules: PropertyRule[];
 	automaticMoving: boolean;
 	timer: number | null; // in miliseconds
 	collapseSections: {
