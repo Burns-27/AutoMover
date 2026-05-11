@@ -1,179 +1,155 @@
-
-import type AutoMoverPlugin from "main";
+import AutoMoverPlugin from "main";
 import PropertyRule from "Models/PropertyRule";
+import { SettingGroup } from "obsidian";
+import { CategoryGroup } from "Settings/CategoryGroup";
 
 export function CategorySection(
 	containerEl: HTMLElement,
 	plugin: AutoMoverPlugin,
 	display: () => void,
 ) {
-	/**
-	 * Debounced save function to avoid excessive disk writes
-	 */
-	let saveTimeout: NodeJS.Timeout | null = null;
-	const debouncedSave = () => {
-		if (saveTimeout) clearTimeout(saveTimeout);
-		saveTimeout = setTimeout(() => {
-			plugin.saveData(plugin.settings);
-		}, 500);
-	};
-
+	const collapsedRules = plugin.settings.collapseSections.categoryRules;
 	/**
 	 * Header for project folders
 	 */
 	const CategoryRuleContainer = containerEl.createDiv({
-		cls: "category",
+		cls: "moving_rules_container",
 	});
 
 	// Class used from obdsidian's css for consistency
-	const categoryRuleDetails = CategoryRuleContainer.createEl("details", {});
+	const categoryRuleDetails = CategoryRuleContainer.createEl("details", {
+		cls: "property",
+	});
 	categoryRuleDetails.createEl("summary", {
-		text: "Category Rules",
+		text: "Property Rules",
 		cls: ["setting-item-heading"],
 	});
-	
-	categoryRuleDetails.open = !plugin.settings.collapseSections.categoryRules;
+
+	categoryRuleDetails.open = !collapsedRules.main;
 	categoryRuleDetails.addEventListener("toggle", async () => {
-		plugin.settings.collapseSections.categoryRules =
-			!categoryRuleDetails.open;
+		collapsedRules.main = !categoryRuleDetails.open;
 		await plugin.saveData(plugin.settings);
 	});
-	//Category explanation setting
-	const categoryExplanation = CategoryRuleContainer.createEl("details",{
-		text:"How to use category rules",
-		cls:['category-subheading']
-	})
-	categoryExplanation.open = !plugin.settings.collapseSections.categoryExplanation;
-	categoryExplanation.addEventListener("toggle",async ()=>{
-		plugin.settings.collapseSections.categoryExplanation = !categoryExplanation.open;
+	/**
+	 * Cateory Explanation setting
+	 */
+	//The Details Element and summary, with is listener
+	const categoryExplanationDetails = categoryRuleDetails.createEl("details", {cls:"sub"});
+	categoryExplanationDetails.createEl("summary", {
+		text: "Instructions for Property Rules",
+		cls: ["setting-item-heading"],
+	});
+	categoryExplanationDetails.open = !collapsedRules.explanation;
+	categoryExplanationDetails.addEventListener("toggle", async () => {
+		collapsedRules.main = !categoryExplanationDetails.open;
 		await plugin.saveData(plugin.settings);
-	})
-	categoryExplanation.createEl("p",{text:"This is just me testing how this works. not sure how this will go."})
-
-	const categoryList = categoryRuleDetails.createDiv({
-		cls: "category-rule-container",
 	});
-	const categoryHeader = categoryList.createDiv({
-		cls: "category-heading-container",
+	const categoryExplanation = categoryExplanationDetails.createDiv({cls:"container"})
+	//Category Explanation Content
+	categoryExplanation.createEl("p", {
+		text: "Property Rules will check each file for the property defined as Category Property, and from there match it to a Subcategory, and Type, to move it to the set folder.",
 	});
-	categoryHeader.createEl("p", {
-		text: "category name",
-		cls: "category-heading",
-	});
-	categoryHeader.createEl("p", {
-		text: "Destination",
-		cls: "category-heading",
+	categoryExplanation.createEl("p", {
+		text: 'When Defining folders for Subcategories and Types, they are nested. For example, a Category, Media with a folder of Media, has a subcategory of book, with a folder "books". A file with Category:Media, Subcategory:book would be sorted into Media/books',
 	});
 
-	const addCategoryButton = categoryHeader.createEl("button", {
-		text: "+",
+	/**
+	 * Property Definition Section
+	 */
+	//Creating the Details and summanry, and its collapsing rules
+	const propertyDefinitions = categoryRuleDetails.createEl("details", {cls:"sub"});
+
+	propertyDefinitions.createEl("summary", {
+		text: "Property Definitions",
+		cls: "setting-item-heading",
+	});
+	propertyDefinitions.open = !collapsedRules.properties;
+	propertyDefinitions.addEventListener("toggle", async () => {
+		collapsedRules.main = !propertyDefinitions.open;
+		await plugin.saveData(plugin.settings);
+	});
+	const propDefDiv = propertyDefinitions.createDiv({cls:"container"});
+	// Property definition Settings group.
+	const propDefSettingGroup = new SettingGroup(propDefDiv);
+	propDefSettingGroup.addSetting((category) => {
+		category
+			.setName("Category property")
+			.setDesc(
+				"This will be the property to check against listed Category. Click the '+' to add a new Category",
+			)
+			.addText((text) =>
+				text
+					.setPlaceholder("property")
+					.setValue(plugin.settings.properties.category)
+					.onChange(async (value) => {
+						plugin.settings.properties.category = value;
+						await plugin.saveData(plugin.settings);
+					}),
+			)
+	});
+	propDefSettingGroup.addSetting((property) => {
+		property
+			.setName("Subcategory property")
+			.setDesc(
+				"This will be the property to check against listed subcategories of the matching category",
+			)
+			.addText((text) =>
+				text
+					.setPlaceholder("property")
+					.setValue(plugin.settings.properties.subcategory)
+					.onChange(async (value) => {
+						plugin.settings.properties.subcategory = value;
+						await plugin.saveData(plugin.settings);
+					}),
+			);
+	});
+
+	propDefSettingGroup.addSetting((type) => {
+		type.setName("Type property")
+			.setDesc(
+				"This will be the property to check against listed types of the matching subcategories",
+			)
+			.addText((text) =>
+				text
+					.setPlaceholder("property")
+					.setValue(plugin.settings.properties.type)
+					.onChange(async (value) => {
+						plugin.settings.properties.type = value;
+						await plugin.saveData(plugin.settings);
+					}),
+			);
+	});
+	/**
+	 * Category List
+	 */
+	//Creating the Detail and summary for the Category Lists
+	const categoryListDetail = categoryRuleDetails.createEl("details", {cls:"sub"});
+	const categorySummary = categoryListDetail.createEl("summary", {
+		text: "Categories",
+		cls: "setting-item-heading",
+	});
+	categoryListDetail.open = !collapsedRules.list;
+	categoryListDetail.addEventListener("toggle", async () => {
+		collapsedRules.list = !categoryListDetail.open;
+		await plugin.saveData(plugin.settings);
+	});
+
+	//The Add New Category Button
+	const buttondiv = categorySummary.createDiv({cls:"button"})
+	const addCategoryButton = buttondiv.createEl("button", {
+		text: `Add Category`,
 		cls: "rule_button",
 	});
 	addCategoryButton.addEventListener("click", () => {
 		plugin.settings.categoryRules.push(new PropertyRule());
 		display();
 	});
-
+	const categoryListGroup = categoryListDetail.createDiv({cls:["container"]})
+	const categoryList = categoryListGroup.createDiv()
 	/**
-	 * List of category
+	 * Calling the Category Group for each Category defined in spaces
 	 */
 	for (const category of plugin.settings.categoryRules as PropertyRule[]) {
-		const child = categoryList.createDiv({ cls: "category-rule" });
-		// Class used from obdsidian's css for consistency
-		const movingRulesDetails = child.createEl("details", {});
-		const movingRulesSummary = movingRulesDetails.createEl("summary", {
-			cls: ["setting-item-heading", "rule"],
-		});
-
-		movingRulesDetails.open = !category.collapsed;
-		movingRulesDetails.addEventListener("toggle", async () => {
-			category.collapsed = !movingRulesDetails.open;
-			await plugin.saveData(plugin.settings);
-		});
-
-		movingRulesSummary.createEl("input", {
-			value: category.Name,
-			cls: "rule_input",
-		}).onchange = (e) => {
-			category.Name = (e.target as HTMLInputElement).value;
-			debouncedSave();
-		};
-		movingRulesSummary.createEl("input", {
-			value: category.folder,
-			cls: "rule_input",
-		}).onchange = (e) => {
-			category.folder = (e.target as HTMLInputElement).value;
-			debouncedSave();
-		};
-
-		const addRuleButton = movingRulesSummary.createEl("button", {
-			text: "+",
-			cls: "rule_button",
-		});
-		addRuleButton.addEventListener("click", () => {
-			category.rules.push(new PropertyRule());
-			display();
-		});
-
-		const duplicateRuleButton = movingRulesSummary.createEl("button", {
-			text: "⿻",
-			cls: "rule_button rule_button_duplicate",
-		});
-		duplicateRuleButton.addEventListener("click", () => {
-			plugin.settings.categoryRules.push(
-				new PropertyRule(category.Name, category.folder),
-			);
-			display();
-		});
-
-		const deleteRuleButton = movingRulesSummary.createEl("button", {
-			text: "x",
-			cls: "rule_button rule_button_remove",
-		});
-		deleteRuleButton.addEventListener("click", () => {
-			plugin.settings.categoryRules =
-				plugin.settings.categoryRules.filter((p) => p !== category);
-			display();
-		});
-
-		const movingRules = movingRulesDetails.createDiv();
-		/**
-		 * List of category rules
-		 */
-		for (const rule of category.rules) {
-			const child = movingRules.createDiv({ cls: "project_rule" });
-			child.createEl("input", {
-				value: rule.Name,
-				cls: "rule_input",
-			}).onchange = (e) => {
-				rule.Name = (e.target as HTMLInputElement).value;
-				debouncedSave();
-			};
-			child.createEl("input", {
-				value: rule.folder,
-				cls: "rule_input",
-			}).onchange = (e) => {
-				rule.folder = (e.target as HTMLInputElement).value;
-				debouncedSave();
-			};
-
-			const duplicateRuleButton = child.createEl("button", {
-				text: "⿻",
-				cls: "rule_button rule_button_duplicate",
-			});
-			duplicateRuleButton.addEventListener("click", () => {
-				category.rules.push(new PropertyRule(rule.Name, rule.folder));
-				display();
-			});
-
-			const deleteRuleButton = child.createEl("button", {
-				text: "x",
-				cls: "rule_button rule_button_remove",
-			});
-			deleteRuleButton.addEventListener("click", () => {
-				category.rules = category.rules.filter((r) => r !== rule);
-				display();
-			});
-		}
+		CategoryGroup(category, categoryList, plugin, display);
 	}
 }

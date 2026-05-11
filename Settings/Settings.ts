@@ -27,8 +27,12 @@ export interface AutoMoverSettings {
 		exclusionRules: boolean;
 		tagRules: boolean;
 		projectRules: boolean;
-		categoryRules: boolean;
-		categoryExplanation:boolean;
+		categoryRules: {
+			main:boolean;
+			explanation:boolean;
+			properties:boolean;
+			list:boolean;
+		};
 	};
 }
 
@@ -42,9 +46,8 @@ export const DEFAULT_SETTINGS: Partial<AutoMoverSettings> = {
 	properties:{
 		category:"Category",
 	subcategory:"Subcategory",
-	type:"type",
+	type:"Type",
 	},
-	
 	categoryRules: [],
 	automaticMoving: false,
 	timer: null,
@@ -52,10 +55,14 @@ export const DEFAULT_SETTINGS: Partial<AutoMoverSettings> = {
 		tutorial: false,
 		movingRules: false,
 		exclusionRules: false,
-		categoryExplanation:false,
 		tagRules: false,
 		projectRules: false,
-		categoryRules: false,
+		categoryRules:{
+			main:false,
+			explanation:false,
+			properties:false,
+			list:false,
+		}
 	},
 };
 /*

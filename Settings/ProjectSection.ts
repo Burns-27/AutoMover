@@ -1,5 +1,4 @@
 import { MovingRule } from "Models/MovingRule";
-import * as obsidian from "obsidian";
 import type AutoMoverPlugin from "main";
 import { ProjectRule } from "Models/ProjectRule";
 

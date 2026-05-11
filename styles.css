@@ -21,6 +21,7 @@ If your plugin does not need CSS, delete this file.
   margin-bottom: 0.5em;
   justify-content: space-evenly;
   gap: 0.5em;
+  flex-wrap: nowrap;
 }
 
 .rule_header {
@@ -95,7 +96,83 @@ If your plugin does not need CSS, delete this file.
   justify-content: space-evenly;
   gap: 0.5em;
 }
-
+.property {
+  details {
+    padding-top:1em;
+    margin-bottom:1em;
+    .container {
+      margin-left:2em;
+      
+    }
+  }
+  .sub{
+    margin-left:2em;
+    
+  }
+  summary {
+    display:flex;
+    text-wrap: false;
+    align-items: center;
+    padding-bottom: 0.5em;
+    margin:auto;
+    .button{
+      display:flex;
+      justify-content: end;
+      flex:auto;
+      gap:1em;
+    }
+  }
+  .infoDiv{
+    display:flex;
+    flex-direction: row;
+    gap:1em;
+  }
+  .input-Div{
+    display:flex;
+    flex-direction: row;
+    gap:1em;
+    align-items: center;
+    margin-bottom: 1em;
+  }
+  .input{
+  padding: 0.5em;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 0.25em;
+  }
+  .type{
+    display:flex;
+    flex-direction: row;
+    gap:1em;
+    .input{
+      width: 100%;
+    }
+    
+  }
+  .headings{
+    display: flex;
+    flex-direction: row;
+    margin-left:2em;
+    p{
+      width:100%;
+    }
+  }
+  .category  {
+    background-color: var(--setting-items-background);
+    border-radius: var(--setting-items-radius);
+    padding:var(--setting-items-padding);
+    margin-bottom: 1em;
+    .container{
+      padding: 0 var(--size-4-4);
+      margin:0
+    }
+  }
+  .subcategory {
+    background-color: var(--background-primary);
+    border-radius: var(--setting-items-radius);
+    padding:var(--setting-items-padding);
+    border-bottom: 1px solid var(--background-modifier-border);
+  }
+}
 summary {
   /* Hides the marker in most browsers */
   list-style: none;
