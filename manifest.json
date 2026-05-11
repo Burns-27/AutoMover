@@ -1,11 +1,11 @@
 {
-	"id": "fork-auto-mover",
-	"name": "FORK - AutoMover",
-	"version": "1.9.0",
+	"id": "auto-mover",
+	"name": "AutoMover",
+	"version": "1.1.0",
 	"minAppVersion": "0.15.0",
 	"description": "Move files and notes with specified names into their designated folders according to rules you define.",
-	"author": "Burns-27",
-	"authorUrl": "https://github.com/Burns-27",
+	"author": "Al0cam",
+	"authorUrl": "https://github.com/al0cam",
 	"fundingUrl": "",
 	"isDesktopOnly": false
 }
