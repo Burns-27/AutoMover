@@ -1,8 +1,9 @@
-import type AutoMoverPlugin from "main";
-import { CategoryRule } from "Models/CategoryRule";
+//import type AutoMoverPlugin from "main";
+
 import type { ExclusionRule } from "Models/ExclusionRule";
 import type { MovingRule } from "Models/MovingRule";
 import { ProjectRule } from "Models/ProjectRule";
+import PropertyRule from "Models/PropertyRule";
 
 export interface AutoMoverSettings {
 	moveOnOpen: boolean;
@@ -11,7 +12,13 @@ export interface AutoMoverSettings {
 	exclusionRules: ExclusionRule[];
 	tagRules: MovingRule[];
 	projectRules: ProjectRule[];
-	categoryRules: CategoryRule[];
+	properties:{
+		category:string;
+	subcategory:string;
+	type:string;
+	}
+	
+	categoryRules: PropertyRule[];
 	automaticMoving: boolean;
 	timer: number | null; // in miliseconds
 	collapseSections: {
@@ -20,7 +27,12 @@ export interface AutoMoverSettings {
 		exclusionRules: boolean;
 		tagRules: boolean;
 		projectRules: boolean;
-		categoryRules: boolean;
+		categoryRules: {
+			main:boolean;
+			explanation:boolean;
+			properties:boolean;
+			list:boolean;
+		};
 	};
 }
 
@@ -31,6 +43,11 @@ export const DEFAULT_SETTINGS: Partial<AutoMoverSettings> = {
 	exclusionRules: [],
 	tagRules: [],
 	projectRules: [],
+	properties:{
+		category:"Category",
+	subcategory:"Subcategory",
+	type:"Type",
+	},
 	categoryRules: [],
 	automaticMoving: false,
 	timer: null,
@@ -40,12 +57,18 @@ export const DEFAULT_SETTINGS: Partial<AutoMoverSettings> = {
 		exclusionRules: false,
 		tagRules: false,
 		projectRules: false,
-		categoryRules: false,
+		categoryRules:{
+			main:false,
+			explanation:false,
+			properties:false,
+			list:false,
+		}
 	},
 };
-
+/*
 function loadSettings(
 	AutoMoverPlugin: AutoMoverPlugin,
 ): Partial<AutoMoverSettings> {
 	return Object.assign({}, DEFAULT_SETTINGS, AutoMoverPlugin.loadData());
 }
+*/
