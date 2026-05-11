@@ -1,7 +1,7 @@
 {
 	"id": "fork-auto-mover",
 	"name": "FORK - AutoMover",
-	"version": "1.9.0",
+	"version": "1.0.8",
 	"minAppVersion": "0.15.0",
 	"description": "Move files and notes with specified names into their designated folders according to rules you define.",
 	"author": "Burns-27",
