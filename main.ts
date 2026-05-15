@@ -21,6 +21,8 @@ export default class AutoMoverPlugin extends obsidian.Plugin {
     this.settings = Object.assign({}, Settings.DEFAULT_SETTINGS, await this.loadData());
     this.addSettingTab(new SettingsTab(this.app, this));
 
+    this.automaticMoving();
+
     // negative ifs for easier reading and debugging
     if (!this.areMovingTriggersEnabled()) return;
     if (!this.areThereRulesToApply()) return;
@@ -37,7 +39,7 @@ export default class AutoMoverPlugin extends obsidian.Plugin {
     this.registerEvent(
       // since i am defining my own event, ts-lint is crying about it but it works in the end
       this.app.workspace.on("AutoMover:automatic-moving-update", () => {
-        // console.log("Automatic moving update");
+        console.log("Automatic moving update");
         this.automaticMoving();
       }),
     );
