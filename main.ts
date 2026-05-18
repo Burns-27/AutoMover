@@ -2,7 +2,8 @@ import settingsIO from "IO/SettingsIO";
 import * as Settings from "Settings/Settings";
 import { SettingsTab } from "Settings/SettingsTab";
 import exclusionMatcherUtil from "Utils/ExclusionMatcherUtil";
-import movingUtil from "Utils/MovingUtil";
+import loggerUtil from "Utils/LoggerUtil";
+import movingUtil, { type MoveOutcome } from "Utils/MovingUtil";
 import ruleMatcherUtil from "Utils/RuleMatcherUtil";
 import timerUtil from "Utils/TimerUtil";
 import * as obsidian from "obsidian";
@@ -11,6 +12,13 @@ import projectMatcherUtil from "Utils/ProjectMatcherUtil";
 export default class AutoMoverPlugin extends obsidian.Plugin {
   settings: Settings.AutoMoverSettings;
 
+  /**
+   * Obsidian lifecycle hook called when the plugin is enabled.
+   * Initializes utilities, loads settings, registers the settings tab,
+   * file-open and automatic-moving events, the command, and the ribbon icon.
+   *
+   * @returns void
+   */
   async onload() {
     // console.log("loading plugin");
     movingUtil.init(this.app);
@@ -19,6 +27,7 @@ export default class AutoMoverPlugin extends obsidian.Plugin {
      * Loading settings and creating the settings tab
      */
     this.settings = Object.assign({}, Settings.DEFAULT_SETTINGS, await this.loadData());
+    loggerUtil.init(this);
     this.addSettingTab(new SettingsTab(this.app, this));
 
     this.automaticMoving();
@@ -28,18 +37,23 @@ export default class AutoMoverPlugin extends obsidian.Plugin {
     if (!this.areThereRulesToApply()) return;
 
     this.registerEvent(
-      this.app.workspace.on("file-open", (file: obsidian.TFile) => {
+      this.app.workspace.on("file-open", async (file: obsidian.TFile) => {
         if (!this.settings.moveOnOpen) return;
         if (file == null || file.path == null) return;
         if (this.isFileExcluded(file)) return;
-        this.matchAndMoveFile(file);
+        const result = await this.matchAndMoveFile(file);
+        if (result === "moved") loggerUtil.infoNotice("1 file moved.");
+        else if (result === "duplicate")
+          loggerUtil.infoNotice("1 file not moved - duplicate name.");
+        else if (result === "invalid_path" || result === "error")
+          loggerUtil.infoNotice("1 file failed to move.");
       }),
     );
 
     this.registerEvent(
       // since i am defining my own event, ts-lint is crying about it but it works in the end
       this.app.workspace.on("AutoMover:automatic-moving-update", () => {
-        console.log("Automatic moving update");
+        loggerUtil.debug("Automatic moving update");
         this.automaticMoving();
       }),
     );
@@ -66,7 +80,7 @@ export default class AutoMoverPlugin extends obsidian.Plugin {
     // console.log("Automatic moving run");
     if (!this.settings.automaticMoving) return;
     if (this.settings.timer == null || this.settings.timer <= 0) return;
-    this.goThroughAllFiles();
+    this.goThroughAllFiles({ silentIfUnchanged: true });
     timerUtil.startTimer(this.automaticMoving.bind(this), this.settings.timer);
   }
 
@@ -75,15 +89,36 @@ export default class AutoMoverPlugin extends obsidian.Plugin {
    *
    * @returns void
    */
-  goThroughAllFiles() {
+  async goThroughAllFiles(options: { silentIfUnchanged?: boolean } = {}) {
     // console.log("Going through all files");
-    const files = this.app.vault.getFiles();
-    for (const file of files) {
+    const candidates: obsidian.TFile[] = [];
+    for (const file of this.app.vault.getFiles()) {
       if (file == null || file.path == null) continue;
       if (this.isFileExcluded(file)) continue;
-      this.matchAndMoveFile(file);
+      candidates.push(file);
     }
-    new obsidian.Notice("All files moved!", 5000);
+
+    const results = await Promise.all(candidates.map((file) => this.matchAndMoveFile(file)));
+
+    let moved = 0;
+    let duplicate = 0;
+    let failed = 0;
+    for (const result of results) {
+      if (result === "moved") moved++;
+      else if (result === "duplicate") duplicate++;
+      else if (result === "invalid_path" || result === "error") failed++;
+    }
+
+    if (options.silentIfUnchanged && moved === 0) return;
+
+    const lines: string[] = [];
+    if (moved > 0) lines.push(`${moved} ${moved === 1 ? "file" : "files"} moved.`);
+    if (duplicate > 0)
+      lines.push(`${duplicate} ${duplicate === 1 ? "file" : "files"} not moved - duplicate name.`);
+    if (failed > 0)
+      lines.push(`${failed} ${failed === 1 ? "file" : "files"} failed to move.`);
+
+    loggerUtil.infoNotice(lines.length === 0 ? "No files needed to be moved." : lines.join("\n"));
   }
 
   /**
@@ -100,53 +135,56 @@ export default class AutoMoverPlugin extends obsidian.Plugin {
   }
 
   /**
-   * Matches the file to the rule and moves it to the destination folder
+   * Matches the file to the first applicable rule (project, then name, then tag)
+   * and moves it.
    *
    * @param file - File to be matched and moved
-   * @returns void
+   * @returns the MoveOutcome from the matched rule, or null if no rule matched
    */
-  matchAndMoveFile(file: obsidian.TFile): void {
+  async matchAndMoveFile(file: obsidian.TFile): Promise<MoveOutcome | null> {
     // console.log("Moving file: ", file.path);
-    if (this.matchAndMoveByProject(file)) return;
-    else if (this.matchAndMoveByName(file)) return;
-    else this.matchAndMoveByTag(file);
+    const projectResult = await this.matchAndMoveByProject(file);
+    if (projectResult !== null) return projectResult;
+
+    const nameResult = await this.matchAndMoveByName(file);
+    if (nameResult !== null) return nameResult;
+
+    return this.matchAndMoveByTag(file);
   }
 
   /**
-   * Matches the file by name and moves it to the destination folder
+   * Matches the file by name and moves it to the destination folder.
    *
    * @param file - File to be matched and moved
-   * @returns true if the file was moved, false otherwise
+   * @returns the MoveOutcome, or null if no rule matched
    */
-  matchAndMoveByName(file: obsidian.TFile): boolean {
+  async matchAndMoveByName(file: obsidian.TFile): Promise<MoveOutcome | null> {
     const rule = ruleMatcherUtil.getMatchingRuleByName(file, this.settings.movingRules);
-    if (rule == null || rule.folder == null) return false;
+    if (rule == null || rule.folder == null) return null;
 
     if (ruleMatcherUtil.isRegexGrouped(rule)) {
       const matches = ruleMatcherUtil.getGroupMatches(file, rule);
       const finalDestinationPath = ruleMatcherUtil.constructFinalDesinationPath(rule, matches!);
-      movingUtil.moveFile(file, finalDestinationPath);
-    } else {
-      movingUtil.moveFile(file, rule.folder);
+      return movingUtil.moveFile(file, finalDestinationPath);
     }
-    return true;
+    return movingUtil.moveFile(file, rule.folder);
   }
 
   /**
-   * Matches the file by tags it contains and moves it to the destination folder
+   * Matches the file by tags it contains and moves it to the destination folder.
    *
    * @param file - File to be matched and moved
-   * @returns true if the file was moved, false otherwise
+   * @returns the MoveOutcome, or null if no rule matched
    */
-  matchAndMoveByTag(file: obsidian.TFile): boolean {
+  async matchAndMoveByTag(file: obsidian.TFile): Promise<MoveOutcome | null> {
     const cache = this.app.metadataCache.getFileCache(file);
-    if (cache == null) return false;
+    if (cache == null) return null;
     const tags = obsidian.getAllTags(cache);
-    if (tags == null || tags.length === 0) return false;
+    if (tags == null || tags.length === 0) return null;
 
     const tagRule = ruleMatcherUtil.getMatchingRuleByTag(tags, this.settings.tagRules);
 
-    if (tagRule == null || tagRule.folder == null) return false;
+    if (tagRule == null || tagRule.folder == null) return null;
 
     if (ruleMatcherUtil.isRegexGrouped(tagRule)) {
       const matches = ruleMatcherUtil.getGroupMatchesForTags(tags, tagRule);
@@ -154,38 +192,43 @@ export default class AutoMoverPlugin extends obsidian.Plugin {
       // console.log("Tag rule: ", tagRule);
       // console.log("Tag matches: ", matches);
       const finalDestinationPath = ruleMatcherUtil.constructFinalDesinationPath(tagRule, matches!);
-      movingUtil.moveFile(file, finalDestinationPath);
-    } else {
-      movingUtil.moveFile(file, tagRule.folder);
+      return movingUtil.moveFile(file, finalDestinationPath);
     }
-    return true;
+    return movingUtil.moveFile(file, tagRule.folder);
   }
 
-  matchAndMoveByProject(file: obsidian.TFile): boolean {
+  /**
+   * Matches the file by its `Project` (or `project`) frontmatter value and
+   * moves it according to the matched project rule. If the project rule has
+   * inner rules, the first matching inner rule's destination is appended;
+   * otherwise (or on a "./" destination) the file is moved to the project root.
+   *
+   * @param file - File to be matched and moved
+   * @returns the MoveOutcome, or null if no project rule matched
+   */
+  async matchAndMoveByProject(file: obsidian.TFile): Promise<MoveOutcome | null> {
     const cache = this.app.metadataCache.getFileCache(file);
-    if (cache == null) return false;
-    if (cache.frontmatter == null) return false;
-    if (cache.frontmatter.Project == null && cache.frontmatter.project == null) return false;
+    if (cache == null) return null;
+    if (cache.frontmatter == null) return null;
+    if (cache.frontmatter.Project == null && cache.frontmatter.project == null) return null;
 
     const projectName: string = cache.frontmatter.Project || cache.frontmatter.project;
 
     const projectRule = projectMatcherUtil.getMatchingProjectRule(projectName, this.settings.projectRules);
-    if (projectRule == null || projectRule.folder == null) return false;
+    if (projectRule == null || projectRule.folder == null) return null;
 
     // If no rules defined, move to project root
     if (projectRule.rules == null || projectRule.rules.length === 0) {
-      console.log("No rules defined, moving to project root");
-      movingUtil.moveFile(file, projectRule.folder);
-      return true;
+      loggerUtil.debug("No rules defined, moving to project root");
+      return movingUtil.moveFile(file, projectRule.folder);
     }
 
     const rule = ruleMatcherUtil.getMatchingRuleByName(file, projectRule.rules);
 
     // If no rule matches or folder is "./", move to project root
     if (rule == null || rule.folder === "./") {
-      console.log("No matching rule or './' destination, moving to project root");
-      movingUtil.moveFile(file, projectRule.folder);
-      return true;
+      loggerUtil.debug("No matching rule or './' destination, moving to project root");
+      return movingUtil.moveFile(file, projectRule.folder);
     }
 
     // console.log("Project rule's moving rule found: ", rule);
@@ -194,20 +237,26 @@ export default class AutoMoverPlugin extends obsidian.Plugin {
       const matches = ruleMatcherUtil.getGroupMatches(file, rule);
       const ruleDesinationPath = ruleMatcherUtil.constructFinalDesinationPath(rule, matches!);
       const finalDestinationPath = projectMatcherUtil.constructProjectDestinationPath(projectRule, ruleDesinationPath);
-
-      movingUtil.moveFile(file, finalDestinationPath);
-    } else {
-      const finalDestinationPath = projectMatcherUtil.constructProjectDestinationPath(projectRule, rule.folder);
-
-      movingUtil.moveFile(file, finalDestinationPath);
+      return movingUtil.moveFile(file, finalDestinationPath);
     }
-    return true;
+    const finalDestinationPath = projectMatcherUtil.constructProjectDestinationPath(projectRule, rule.folder);
+    return movingUtil.moveFile(file, finalDestinationPath);
   }
 
+  /**
+   * Reloads the plugin settings from disk, merged on top of DEFAULT_SETTINGS.
+   *
+   * @returns void
+   */
   async asyncloadSettings() {
     this.settings = Object.assign({}, Settings.DEFAULT_SETTINGS, await this.loadData());
   }
 
+  /**
+   * Obsidian lifecycle hook called when the plugin is disabled or reloaded.
+   *
+   * @returns void
+   */
   async onunload() {
     // console.log("unloading plugin");
   }

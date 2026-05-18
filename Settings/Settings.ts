@@ -12,6 +12,7 @@ export interface AutoMoverSettings {
   projectRules: ProjectRule[];
   automaticMoving: boolean;
   timer: number | null; // in miliseconds
+  debugLogging: boolean;
   collapseSections: {
     tutorial: boolean;
     movingRules: boolean;
@@ -30,6 +31,7 @@ export const DEFAULT_SETTINGS: Partial<AutoMoverSettings> = {
   projectRules: [],
   automaticMoving: false,
   timer: null,
+  debugLogging: false,
   collapseSections: {
     tutorial: false,
     movingRules: false,
@@ -39,6 +41,12 @@ export const DEFAULT_SETTINGS: Partial<AutoMoverSettings> = {
   },
 };
 
+/**
+ * Loads the plugin settings by merging persisted data on top of DEFAULT_SETTINGS.
+ *
+ * @param AutoMoverPlugin - The plugin instance used to read persisted data
+ * @returns Partial<AutoMoverSettings>
+ */
 function loadSettings(AutoMoverPlugin: AutoMoverPlugin): Partial<AutoMoverSettings> {
   return Object.assign({}, DEFAULT_SETTINGS, AutoMoverPlugin.loadData());
 }
