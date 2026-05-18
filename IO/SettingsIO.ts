@@ -1,5 +1,6 @@
 import type { AutoMoverSettings } from "Settings/Settings";
-import { Notice, TFile } from "obsidian";
+import loggerUtil from "Utils/LoggerUtil";
+import { TFile } from "obsidian";
 import type { App } from "obsidian";
 
 class SettingsIO {
@@ -8,6 +9,11 @@ class SettingsIO {
 
   private constructor() {}
 
+  /**
+   * Returns the singleton instance of SettingsIO, creating it on first access.
+   *
+   * @returns SettingsIO
+   */
   public static getInstance(): SettingsIO {
     if (!SettingsIO.instance) {
       SettingsIO.instance = new SettingsIO();
@@ -15,6 +21,12 @@ class SettingsIO {
     return SettingsIO.instance;
   }
 
+  /**
+   * Stores the Obsidian app reference used for vault and dialog access.
+   *
+   * @param app - The Obsidian App instance
+   * @returns void
+   */
   public init(app: App): void {
     this.app = app;
   }
@@ -57,11 +69,10 @@ class SettingsIO {
       const fs = require("node:fs");
       fs.writeFileSync(filePath, settingsData);
 
-      new Notice("Settings exported successfully");
+      loggerUtil.infoNotice("Settings exported successfully");
       return true;
     } catch (error) {
-      console.error("Failed to export settings:", error);
-      new Notice("Failed to export settings");
+      loggerUtil.errorNotice("Failed to export settings", error);
       return false;
     }
   }
@@ -77,11 +88,10 @@ class SettingsIO {
     try {
       const filename = "AutoMover_settings.json";
       await this.app.vault.create(filename, settingsData);
-      new Notice(`Settings exported to vault: ${filename}`);
+      loggerUtil.infoNotice(`Settings exported to vault: ${filename}`);
       return true;
     } catch (error) {
-      console.error("Failed to export to vault:", error);
-      new Notice("Failed to export settings to vault");
+      loggerUtil.errorNotice("Failed to export settings to vault", error);
       return false;
     }
   }
@@ -123,15 +133,14 @@ class SettingsIO {
       const importedSettings = JSON.parse(fileContent);
 
       if (!this.validateSettings(importedSettings)) {
-        new Notice("Invalid settings file format");
+        loggerUtil.warnNotice("Invalid settings file format");
         return null;
       }
 
-      new Notice("Settings imported successfully");
+      loggerUtil.infoNotice("Settings imported successfully");
       return importedSettings;
     } catch (error) {
-      console.error("Failed to import settings:", error);
-      new Notice("Failed to import settings");
+      loggerUtil.errorNotice("Failed to import settings", error);
       return null;
     }
   }
@@ -148,7 +157,7 @@ class SettingsIO {
       const file = this.app.vault.getAbstractFileByPath(filename);
 
       if (!file || !(file instanceof TFile)) {
-        new Notice(`Could not find ${filename} in vault`);
+        loggerUtil.warnNotice(`Could not find ${filename} in vault`);
         return null;
       }
 
@@ -156,15 +165,14 @@ class SettingsIO {
       const importedSettings = JSON.parse(fileContent);
 
       if (!this.validateSettings(importedSettings)) {
-        new Notice("Invalid settings file format");
+        loggerUtil.warnNotice("Invalid settings file format");
         return null;
       }
 
-      new Notice("Settings imported from vault successfully");
+      loggerUtil.infoNotice("Settings imported from vault successfully");
       return importedSettings;
     } catch (error) {
-      console.error("Failed to import from vault:", error);
-      new Notice("Failed to import settings from vault");
+      loggerUtil.errorNotice("Failed to import settings from vault", error);
       return null;
     }
   }
