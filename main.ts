@@ -37,11 +37,16 @@ export default class AutoMoverPlugin extends obsidian.Plugin {
     if (!this.areThereRulesToApply()) return;
 
     this.registerEvent(
-      this.app.workspace.on("file-open", (file: obsidian.TFile) => {
+      this.app.workspace.on("file-open", async (file: obsidian.TFile) => {
         if (!this.settings.moveOnOpen) return;
         if (file == null || file.path == null) return;
         if (this.isFileExcluded(file)) return;
-        this.matchAndMoveFile(file);
+        const result = await this.matchAndMoveFile(file);
+        if (result === "moved") loggerUtil.infoNotice("1 file moved.");
+        else if (result === "duplicate")
+          loggerUtil.infoNotice("1 file not moved - duplicate name.");
+        else if (result === "invalid_path" || result === "error")
+          loggerUtil.infoNotice("1 file failed to move.");
       }),
     );
 
@@ -75,7 +80,7 @@ export default class AutoMoverPlugin extends obsidian.Plugin {
     // console.log("Automatic moving run");
     if (!this.settings.automaticMoving) return;
     if (this.settings.timer == null || this.settings.timer <= 0) return;
-    this.goThroughAllFiles();
+    this.goThroughAllFiles({ silentIfUnchanged: true });
     timerUtil.startTimer(this.automaticMoving.bind(this), this.settings.timer);
   }
 
@@ -84,7 +89,7 @@ export default class AutoMoverPlugin extends obsidian.Plugin {
    *
    * @returns void
    */
-  async goThroughAllFiles() {
+  async goThroughAllFiles(options: { silentIfUnchanged?: boolean } = {}) {
     // console.log("Going through all files");
     const candidates: obsidian.TFile[] = [];
     for (const file of this.app.vault.getFiles()) {
@@ -103,6 +108,8 @@ export default class AutoMoverPlugin extends obsidian.Plugin {
       else if (result === "duplicate") duplicate++;
       else if (result === "invalid_path" || result === "error") failed++;
     }
+
+    if (options.silentIfUnchanged && moved === 0) return;
 
     const lines: string[] = [];
     if (moved > 0) lines.push(`${moved} ${moved === 1 ? "file" : "files"} moved.`);

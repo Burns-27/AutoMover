@@ -20,6 +20,25 @@ The numbers are elaborate below the image.
 11. **Duplicate rule button**: This button will duplicate the selected rule from the list of rules.
 
 
+## Notifications for the Moving Toggles
+
+Each of the three moving triggers above (on-open, manual run, automatic timer) reports back differently:
+
+- **On-open**: when opening a file actually triggers a move, a short notice is shown - `1 file moved.`, `1 file not moved - duplicate name.`, or `1 file failed to move.`. Opening a file that doesn't match any rule stays silent so normal navigation isn't interrupted.
+- **Manual run** (ribbon icon or `AutoMover: Move files` command): always reports a summary, including `No files needed to be moved.` when nothing matched. This is the path to use when you want explicit confirmation of what happened.
+- **Automatic timer**: only shows a notice when at least one file was actually moved on that tick. Duplicate-name skips and move failures are intentionally suppressed here, because those conditions persist across ticks - a filename that collides today will still collide on the next tick, and a rule with a bad destination will keep failing - so reporting them every interval would spam notices indefinitely. If you need the full breakdown of duplicates and failures, trigger a manual run.
+
+
+## Debug Logging Toggle
+
+Directly below the moving toggles there is a **Debug logging** toggle. It is placed there on purpose - the rule lists further down can grow long, and burying a developer-facing switch at the very bottom of the settings tab makes it awkward to reach. It is independent of the moving toggles above and controls verbose console output, not Obsidian notices.
+
+- When **off** (the default), only error-level messages and the user-facing notices described above are produced. This is the right setting for normal use.
+- When **on**, the plugin writes extra `debug` and `info` messages to the developer console (open it with `Ctrl+Shift+I` in Obsidian). These include things like which rule matched a given file, why a move was skipped as a duplicate, and the path a file was renamed to. None of this appears as a notice in the editor - you have to open the dev tools to see it.
+
+Leave this off unless you are diagnosing an issue or filing a bug report. The verbose output is meant to make problems reproducible, not to be read during regular use.
+
+
 ## Export and Import
 
 By default, if you are using some way of syncing your obsidian vaults, this doesn't provide anyting new for you.

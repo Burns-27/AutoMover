@@ -96,6 +96,18 @@ export class SettingsTab extends PluginSettingTab {
           }),
       );
 
+    new Setting(containerEl)
+      .setName("Debug logging")
+      .setDesc(
+        "Log verbose debug messages to the developer console (Ctrl+Shift+I). Leave off unless diagnosing an issue.",
+      )
+      .addToggle((cb) =>
+        cb.setValue(this.plugin.settings.debugLogging).onChange(async (value) => {
+          this.plugin.settings.debugLogging = value;
+          await this.plugin.saveData(this.plugin.settings);
+        }),
+      );
+
     // TUTORIAL START
     /**
      * Instead of using the default .setting-item class I created a custom class to add other styling,
@@ -162,17 +174,5 @@ export class SettingsTab extends PluginSettingTab {
     exclusionSection(containerEl, this.plugin, this.display);
     projectSection(containerEl, this.plugin, this.display);
 
-    new Setting(containerEl).setName("Advanced").setHeading();
-    new Setting(containerEl)
-      .setName("Debug logging")
-      .setDesc(
-        "Log verbose debug messages to the developer console (Ctrl+Shift+I). Leave off unless diagnosing an issue.",
-      )
-      .addToggle((cb) =>
-        cb.setValue(this.plugin.settings.debugLogging).onChange(async (value) => {
-          this.plugin.settings.debugLogging = value;
-          await this.plugin.saveData(this.plugin.settings);
-        }),
-      );
   };
 }
