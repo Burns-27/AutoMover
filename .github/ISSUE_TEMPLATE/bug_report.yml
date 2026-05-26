@@ -1,0 +1,99 @@
+name: Bug Report
+description: Something is broken in the plugin
+labels: ["bug", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before filing: search existing issues and make sure you're on the **latest plugin version**.
+
+  - type: input
+    id: plugin-version
+    attributes:
+      label: Plugin Version
+      placeholder: "e.g. 1.4.2"
+    validations:
+      required: true
+
+  - type: input
+    id: obsidian-version
+    attributes:
+      label: Obsidian Version
+      placeholder: "e.g. 1.6.3"
+    validations:
+      required: true
+
+  - type: input
+    id: installer-version
+    attributes:
+      label: Obsidian Installer Version
+      description: Found in Settings → About → Installer version. This matters — runtime bugs are often installer-related.
+      placeholder: "e.g. 1.1.16"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating System
+      options:
+        - Windows
+        - macOS
+        - Linux
+        - Android
+        - iOS / iPadOS
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: Be specific. "It doesn't work" is not a bug report.
+      placeholder: "When I do X, Y happens instead of Z."
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      placeholder: |
+        1. Open a note
+        2. Run command '...'
+        3. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      placeholder: What should have happened?
+    validations:
+      required: true
+
+  - type: textarea
+    id: console-errors
+    attributes:
+      label: Console Errors
+      description: Open the developer console (Ctrl+Shift+I / Cmd+Opt+I), reproduce the bug, paste any errors here. If there are none, say so.
+      render: bash
+
+  - type: dropdown
+    id: restricted-mode
+    attributes:
+      label: Does the bug occur with all other plugins disabled?
+      description: Helps rule out plugin conflicts.
+      options:
+        - "Yes"
+        - "No"
+        - "Didn't test"
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Anything Else?
+      description: Screenshots, screen recordings, related issues, vault setup details — whatever's relevant.

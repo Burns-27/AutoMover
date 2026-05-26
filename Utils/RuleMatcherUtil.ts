@@ -1,5 +1,6 @@
 import type { MovingRule } from "Models/MovingRule";
 import { ProjectRule } from "Models/ProjectRule";
+import loggerUtil from "Utils/LoggerUtil";
 import type { TFile } from "obsidian";
 
 class RuleMatcherUtil {
@@ -8,6 +9,11 @@ class RuleMatcherUtil {
 
   private constructor() {}
 
+  /**
+   * Returns the singleton instance of RuleMatcherUtil, creating it on first access.
+   *
+   * @returns RuleMatcherUtil
+   */
   public static getInstance(): RuleMatcherUtil {
     if (!RuleMatcherUtil.instance) {
       RuleMatcherUtil.instance = new RuleMatcherUtil();
@@ -38,15 +44,15 @@ class RuleMatcherUtil {
   public getMatchingRuleByName(file: TFile, rules: MovingRule[]): MovingRule | null {
     for (const rule of rules) {
       if (rule.regex == null || rule.regex === "") {
-        console.error("Rule does not have a regex: ", rule);
+        loggerUtil.error("Rule does not have a regex: ", rule);
         continue;
       }
       if (rule.folder == null || rule.folder === "") {
-        console.error("Rule does not have a destination folder: ", rule);
+        loggerUtil.error("Rule does not have a destination folder: ", rule);
         continue;
       }
       if (!this.isValidRegex(rule.regex)) {
-        console.error("Rule has an invalid regex: ", rule);
+        loggerUtil.error("Rule has an invalid regex: ", rule);
         continue;
       }
       const regex = this.getCompiledRegex(rule.regex);
@@ -67,15 +73,15 @@ class RuleMatcherUtil {
   public getMatchingRuleByTag(tags: string[], rules: MovingRule[]): MovingRule | null {
     for (const rule of rules) {
       if (rule.regex == null || rule.regex === "") {
-        console.error("Tag Rule does not have a regex: ", rule);
+        loggerUtil.error("Tag Rule does not have a regex: ", rule);
         continue;
       }
       if (rule.folder == null || rule.folder === "") {
-        console.error("Tag Rule does not have a destination folder: ", rule);
+        loggerUtil.error("Tag Rule does not have a destination folder: ", rule);
         continue;
       }
       if (!this.isValidRegex(rule.regex)) {
-        console.error("Tag Rule has an invalid regex: ", rule);
+        loggerUtil.error("Tag Rule has an invalid regex: ", rule);
         continue;
       }
 
@@ -104,6 +110,14 @@ class RuleMatcherUtil {
     return matches;
   }
 
+  /**
+   * Returns the regex groups from the first tag that matches the rule
+   * If no tag matches, returns null
+   *
+   * @param tags - The list of tags to test
+   * @param rule - The rule whose regex is applied to each tag
+   * @returns RegExpMatchArray | null
+   */
   public getGroupMatchesForTags(tags: string[], rule: MovingRule): RegExpMatchArray | null {
     const regex = this.getCompiledRegex(rule.regex);
     // console.log("Compiled regex: ", regex);
@@ -130,7 +144,7 @@ class RuleMatcherUtil {
       return true;
     } catch (e) {
       if (e instanceof SyntaxError) {
-        console.error(`Invalid regex pattern: ${e.message}`);
+        loggerUtil.error(`Invalid regex pattern: ${e.message}`);
       }
       return false;
     }

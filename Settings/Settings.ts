@@ -70,5 +70,50 @@ function loadSettings(
 	AutoMoverPlugin: AutoMoverPlugin,
 ): Partial<AutoMoverSettings> {
 	return Object.assign({}, DEFAULT_SETTINGS, AutoMoverPlugin.loadData());
+  moveOnOpen: boolean;
+  // moveOnSave: boolean;
+  movingRules: MovingRule[];
+  exclusionRules: ExclusionRule[];
+  tagRules: MovingRule[];
+  projectRules: ProjectRule[];
+  automaticMoving: boolean;
+  timer: number | null; // in miliseconds
+  debugLogging: boolean;
+  collapseSections: {
+    tutorial: boolean;
+    movingRules: boolean;
+    exclusionRules: boolean;
+    tagRules: boolean;
+    projectRules: boolean;
+  };
+}
+
+export const DEFAULT_SETTINGS: Partial<AutoMoverSettings> = {
+  moveOnOpen: true,
+  // moveOnSave: true,
+  movingRules: [],
+  exclusionRules: [],
+  tagRules: [],
+  projectRules: [],
+  automaticMoving: false,
+  timer: null,
+  debugLogging: false,
+  collapseSections: {
+    tutorial: false,
+    movingRules: false,
+    exclusionRules: false,
+    tagRules: false,
+    projectRules: false,
+  },
+};
+
+/**
+ * Loads the plugin settings by merging persisted data on top of DEFAULT_SETTINGS.
+ *
+ * @param AutoMoverPlugin - The plugin instance used to read persisted data
+ * @returns Partial<AutoMoverSettings>
+ */
+function loadSettings(AutoMoverPlugin: AutoMoverPlugin): Partial<AutoMoverSettings> {
+  return Object.assign({}, DEFAULT_SETTINGS, AutoMoverPlugin.loadData());
 }
 */

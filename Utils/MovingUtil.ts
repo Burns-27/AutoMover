@@ -1,5 +1,17 @@
-import { Notice, TFile, TFolder } from "obsidian";
+import loggerUtil from "Utils/LoggerUtil";
+import { TFile, TFolder } from "obsidian";
 import type { App } from "obsidian";
+
+/**
+ * Result of a single `MovingUtil.moveFile` call.
+ *
+ * - `moved`        — file was renamed successfully
+ * - `no_op`        — file is already at the destination, nothing to do
+ * - `duplicate`    — a different file already exists at the destination path
+ * - `invalid_path` — destination folder didn't exist and could not be created
+ * - `error`        — `vault.rename` rejected for any other reason (logged to console)
+ */
+export type MoveOutcome = "moved" | "no_op" | "duplicate" | "invalid_path" | "error";
 
 class MovingUtil {
 	private static instance: MovingUtil;
@@ -39,69 +51,81 @@ class MovingUtil {
 		return this.app.vault.getAbstractFileByPath(path) instanceof TFolder;
 	}
 
-	/**
-	 * Moves the file to the destination path
-	 *
-	 * @param file - File to be moved
-	 * @param newPath - Destination path
-	 * @returns void
-	 */
-	public moveFile(file: TFile, newPath: string): void {
-		console.log(`Moving ${file.name} to ${newPath}`);
-		if (this.isFolder(newPath)) {
-			this.app.vault.rename(file, `${newPath}/${file.name}`);
-		} else {
-			new Notice(
-				`Invalid destination path\n${newPath} is not a folder!\nCreating requested folder.`,
-				5000,
-			);
-			console.error(
-				`Invalid destination path\n${newPath} is not a folder!\nCreating requested folder.`,
-			);
-			this.createMissingFolders(newPath).then(() => {
-				this.app.vault.rename(file, `${newPath}/${file.name}`);
-			});
-		}
-	}
+  /**
+   * Moves a file into the destination folder, preserving its name.
+   *
+   * Behavior:
+   * - If the file is already at the destination, returns `"no_op"` without touching the vault.
+   * - If another file already occupies the destination path, returns `"duplicate"`
+   *   (checked up-front via `getAbstractFileByPath` rather than by parsing rename errors).
+   * - If the destination folder doesn't exist, intermediate folders are created; failure
+   *   to create them returns `"invalid_path"`.
+   * - Any other rename rejection is caught, logged, and returned as `"error"`.
+   *
+   * @param file - File to be moved
+   * @param newPath - Destination folder (the file's own name is appended automatically)
+   * @returns a {@link MoveOutcome} describing what happened
+   */
+  public async moveFile(file: TFile, newPath: string): Promise<MoveOutcome> {
+    const targetPath = `${newPath}/${file.name}`;
 
-	/**
-	 * Moves the folder to the destination path
-	 *
-	 * @param folder - Folder to be moved
-	 * @param newPath - Destination path
-	 * @returns void
-	 */
-	public moveFolder(folder: TFolder, newPath: string): void {
-		if (this.isFolder(newPath)) {
-			this.app.vault.rename(folder, `${newPath}/${folder.name}`);
-		} else {
-			new Notice(
-				`Invalid destination path\n${newPath} is not a folder!`,
-				5000,
-			);
-			console.error(
-				`Invalid destination path\n${newPath} is not a folder!`,
-			);
-		}
-	}
+    if (file.path === targetPath) {
+      return "no_op";
+    }
 
-	/**
-	 * Creates folder in destination path if it does not exist already
-	 *
-	 * @param path - Path of the folder to be created
-	 * @returns Created folder or null if folder already exists
-	 */
-	public createFolder(path: string): TFolder | null {
-		if (!this.isFolder(path)) {
-			this.app.vault.createFolder(path).then((folder) => {
-				return folder;
-			});
-		} else {
-			new Notice("Folder already exists", 5000);
-			console.error("Folder already exists");
-		}
-		return null;
-	}
+    if (this.app.vault.getAbstractFileByPath(targetPath)) {
+      loggerUtil.debug(`Duplicate at "${targetPath}", skipping "${file.path}"`);
+      return "duplicate";
+    }
+
+    if (!this.isFolder(newPath)) {
+      const created = await this.createMissingFolders(newPath);
+      if (!created) {
+        loggerUtil.error(`Could not create destination folder "${newPath}"`);
+        return "invalid_path";
+      }
+    }
+
+    try {
+      await this.app.vault.rename(file, targetPath);
+      return "moved";
+    } catch (e) {
+      loggerUtil.error(`Failed to move "${file.path}" -> "${targetPath}": ${e}`);
+      return "error";
+    }
+  }
+
+  /**
+   * Moves the folder to the destination path
+   *
+   * @param folder - Folder to be moved
+   * @param newPath - Destination path
+   * @returns void
+   */
+  public moveFolder(folder: TFolder, newPath: string): void {
+    if (this.isFolder(newPath)) {
+      this.app.vault.rename(folder, `${newPath}/${folder.name}`);
+    } else {
+      loggerUtil.errorNotice(`Invalid destination path\n${newPath} is not a folder!`);
+    }
+  }
+
+  /**
+   * Creates folder in destination path if it does not exist already
+   *
+   * @param path - Path of the folder to be created
+   * @returns Created folder or null if folder already exists
+   */
+  public createFolder(path: string): TFolder | null {
+    if (!this.isFolder(path)) {
+      this.app.vault.createFolder(path).then((folder) => {
+        return folder;
+      });
+    } else {
+      loggerUtil.errorNotice("Folder already exists");
+    }
+    return null;
+  }
 
 	/**
 	 * Splits the path into an array of strings
