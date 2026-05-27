@@ -208,3 +208,4 @@ scratch*.{js,ts,tsx,cjs,mjs}
 
 *.bun-build
 
+AutoMover_settings.json

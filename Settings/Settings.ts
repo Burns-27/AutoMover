@@ -1,5 +1,6 @@
 import type AutoMoverPlugin from "main";
 import type { ExclusionRule } from "Models/ExclusionRule";
+import { FrontmatterRule } from "Models/FrontmatterRule";
 import type { MovingRule } from "Models/MovingRule";
 import { ProjectRule } from "Models/ProjectRule";
 
@@ -10,6 +11,12 @@ export interface AutoMoverSettings {
   exclusionRules: ExclusionRule[];
   tagRules: MovingRule[];
   projectRules: ProjectRule[];
+  frontmatterRules: FrontmatterRule[];
+  frontmatterProperties: {
+    top: string;
+    middle: string;
+    end: string;
+  }
   automaticMoving: boolean;
   timer: number | null; // in miliseconds
   debugLogging: boolean;
@@ -19,6 +26,7 @@ export interface AutoMoverSettings {
     exclusionRules: boolean;
     tagRules: boolean;
     projectRules: boolean;
+    frontmatterRules: boolean;
   };
 }
 
@@ -29,6 +37,12 @@ export const DEFAULT_SETTINGS: Partial<AutoMoverSettings> = {
   exclusionRules: [],
   tagRules: [],
   projectRules: [],
+  frontmatterRules: [],
+  frontmatterProperties: {
+    top: "Category",
+    middle: "Type",
+    end:"Subtype"
+  },
   automaticMoving: false,
   timer: null,
   debugLogging: false,
@@ -38,6 +52,7 @@ export const DEFAULT_SETTINGS: Partial<AutoMoverSettings> = {
     exclusionRules: false,
     tagRules: false,
     projectRules: false,
+    frontmatterRules:false,
   },
 };
 

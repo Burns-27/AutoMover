@@ -1,7 +1,7 @@
 /**
  * Defines All the level rules, 
  */
-export class LevelRule {
+export class FrontmatterRule {
   /**
    * The Name and Level Denote the value of the property it will match agains, and what classification it is. 
    */
@@ -10,7 +10,7 @@ export class LevelRule {
   
   public folder: string;
 
-  public sublevels: LevelRule[] = [];
+  public sublevels: FrontmatterRule[] = [];
   public collapsed?: boolean;
   constructor(level: "top" | "middle" | "end", name?: string, folder?: string, collapsed?: boolean) {
     this.level = level;
