@@ -7,6 +7,7 @@ import movingRuleSection from "./MovingRuleSection";
 import { tagSection } from "./TagSection";
 import { groupCollapsed } from "console";
 import { projectSection } from "./ProjectSection";
+import { frontmatterSection } from "Settings/FrontmatterSection";
 
 export class SettingsTab extends PluginSettingTab {
   plugin: AutoMoverPlugin;
@@ -173,6 +174,6 @@ export class SettingsTab extends PluginSettingTab {
     tagSection(containerEl, this.plugin, this.display);
     exclusionSection(containerEl, this.plugin, this.display);
     projectSection(containerEl, this.plugin, this.display);
-
+    frontmatterSection(containerEl, this.plugin, this.display);
   };
 }
