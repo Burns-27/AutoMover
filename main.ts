@@ -52,6 +52,7 @@ export default class AutoMoverPlugin extends obsidian.Plugin {
 
     this.registerEvent(
       // since i am defining my own event, ts-lint is crying about it but it works in the end
+      //@ts-expect-error  This keeps ts-lint from yelling, and letting it build. 
       this.app.workspace.on("AutoMover:automatic-moving-update", () => {
         loggerUtil.debug("Automatic moving update");
         this.automaticMoving();
