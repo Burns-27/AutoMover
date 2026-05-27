@@ -1,6 +1,6 @@
 # vscode
 .vscode
-.code-workspace
+*.code-workspace
 
 # Intellij
 *.iml
@@ -208,3 +208,4 @@ tmp
 scratch*.{js,ts,tsx,cjs,mjs}
 
 *.bun-build
+
