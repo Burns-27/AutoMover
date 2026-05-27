@@ -8,8 +8,9 @@ Therefore, this plugin supports regex and regex groups to create the destination
 
 ## Features
 
-- **Automatic file moving** based on filename patterns, tags, or project metadata
+- **Automatic file moving** based on filename patterns, tags, project metadata, or custom metadata
 - **Regex support** with capture groups for dynamic folder creation
+- **Frontmatter-based Organization** using user selected frontmatter properties
 - **Project-based organization** using frontmatter metadata
 - **Tag-based rules** for organizing files by tags
 - **Exclusion rules** to protect specific files/folders from being moved
@@ -24,33 +25,38 @@ Therefore, this plugin supports regex and regex groups to create the destination
 - [Tag Rules](https://github.com/al0cam/AutoMover/blob/master/docs/tag-rules.md) - Filename-based rules with regex examples
 - [Project Rules](https://github.com/al0cam/AutoMover/blob/master/docs/project-rules.md) - Organize files by project using frontmatter
 - [Exclusion Rules](https://github.com/al0cam/AutoMover/blob/master/docs/exclusion-rules.md) - Protect specific files and folders
+- [Frontmatter Rules](<!-- Need to add link-->) - User Defined Frontmatter organization
 
 ## Quick Start
 
 1. Install the plugin from the Obsidian Community Plugins
 2. Open Settings → AutoMover
 3. Create your first rule:
-   - **Search criteria**: Enter a filename pattern or regex (e.g., "Meeting")
-   - **Destination folder**: Enter the target folder path (e.g., "Work/Meetings")
+    - **Search criteria**: Enter a filename pattern or regex (e.g., "Meeting")
+    - **Destination folder**: Enter the target folder path (e.g., "Work/Meetings")
 4. Toggle "Move on open" to enable automatic moving
 5. Use the "Move files" button to apply rules to existing files
 
 ### Rule Priority
 
 The plugin checks rules in this order:
+
 1. **Exclusion rules** - Files matching these are never moved
-2. **Project rules** - Files with `Project` frontmatter match first
-3. **Moving rules** - Filename-based pattern matching
-4. **Tag rules** - Tag-based matching (if no filename rule matched)
+2. **Frontmatter rules** - Files that match against the custom metadata properties are moved first.
+3. **Project rules** - Files with `Project` frontmatter match next
+4. **Moving rules** - Filename-based pattern matching
+5. **Tag rules** - Tag-based matching (if no filename rule matched)
 
 ## Installation
 
 ### From Obsidian Community Plugins (Recommended)
+
 1. Open Settings → Community Plugins
 2. Browse and search for "AutoMover"
 3. Click Install, then Enable
 
 ### Manual Installation
+
 1. Download the latest release from GitHub
 2. Extract files to `.obsidian/plugins/AutoMover/`
 3. Reload Obsidian
@@ -66,7 +72,6 @@ In case you for some reason want to contact me directly, you can do so by sendin
 If you want to contribute to this plugin, you can do so by forking this repository and creating a pull request with your changes and an elaboration what they are and why.
 Thank you!
 
-
 ## Future Plans
 
 - [x] Add excluded folder support
@@ -81,10 +86,9 @@ Thank you!
 - [ ] Auto tagging of moved files with the destination folder name (last folder in the path)
 - [ ] Add undo button to the notification popup for the moved files
 
-
 - [x] Add collapse/expand all rules button
 - [x] Add Project moving rules
-	- [x] Project name and destination path
-	- [x] Subfield that contain the moving rules for the project
+    - [x] Project name and destination path
+    - [x] Subfield that contain the moving rules for the project
 - [x] Add project rules UI
 - [x] Project rules business logic
