@@ -2,6 +2,7 @@ import type AutoMoverPlugin from "main";
 import type { ExclusionRule } from "Models/ExclusionRule";
 import type { MovingRule } from "Models/MovingRule";
 import { ProjectRule } from "Models/ProjectRule";
+import { MainRule } from "Models/PropertyRules";
 
 export interface AutoMoverSettings {
   moveOnOpen: boolean;
@@ -11,6 +12,9 @@ export interface AutoMoverSettings {
   tagRules: MovingRule[];
   projectRules: ProjectRule[];
   automaticMoving: boolean;
+  mainProperty:string;
+  subProperty:string;
+  propertyRules:MainRule[];
   timer: number | null; // in miliseconds
   debugLogging: boolean;
   collapseSections: {
@@ -19,6 +23,7 @@ export interface AutoMoverSettings {
     exclusionRules: boolean;
     tagRules: boolean;
     projectRules: boolean;
+    propertyRules:boolean;
   };
 }
 
@@ -29,6 +34,9 @@ export const DEFAULT_SETTINGS: Partial<AutoMoverSettings> = {
   exclusionRules: [],
   tagRules: [],
   projectRules: [],
+  propertyRules:[],
+  mainProperty:"Category",
+  subProperty:"Type",
   automaticMoving: false,
   timer: null,
   debugLogging: false,
@@ -38,6 +46,7 @@ export const DEFAULT_SETTINGS: Partial<AutoMoverSettings> = {
     exclusionRules: false,
     tagRules: false,
     projectRules: false,
+    propertyRules:false,
   },
 };
 

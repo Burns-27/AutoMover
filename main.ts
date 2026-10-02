@@ -20,7 +20,7 @@ declare module "obsidian" {
 }
 
 export default class AutoMoverPlugin extends obsidian.Plugin {
-  settings: Settings.AutoMoverSettings;
+  settings!: Settings.AutoMoverSettings;
 
   /**
    * Obsidian lifecycle hook called when the plugin is enabled.
@@ -251,7 +251,13 @@ export default class AutoMoverPlugin extends obsidian.Plugin {
     const finalDestinationPath = projectMatcherUtil.constructProjectDestinationPath(projectRule, rule.folder);
     return movingUtil.moveFile(file, finalDestinationPath);
   }
-
+  async matchAndMoveByProperties(file:obsidian.TFile):Promise<MoveOutcome | null>{
+    const cache = this.app.metadataCache.getFileCache(file);
+    if(!cache || !cache.frontmatter) return null;
+    if(!cache.frontmatter[this.settings.mainProperty]) return null; 
+    const main = cache.frontmatter[this.settings.mainProperty]
+    const mainPropRule = propertyMatcherUtils
+  }
   /**
    * Reloads the plugin settings from disk, merged on top of DEFAULT_SETTINGS.
    *
@@ -289,7 +295,7 @@ export default class AutoMoverPlugin extends obsidian.Plugin {
         this.settings.movingRules.some((rule) => rule.regex !== "" && rule.folder !== "")) ||
       (this.settings.tagRules.length > 0 &&
         this.settings.tagRules.some((rule) => rule.regex !== "" && rule.folder !== "")) ||
-      this.areThereProjectRulesToApply()
+      this.areThereProjectRulesToApply()|| this.areTherePropertyRulesToApply()
     );
   }
 
@@ -303,7 +309,16 @@ export default class AutoMoverPlugin extends obsidian.Plugin {
       this.settings.projectRules.some((projectRule) => projectRule.projectName !== "" && projectRule.folder !== "")
     );
   }
-
+  /**
+   * If there are no Property rules to apply, no need to check for them. 
+   * @returns boolean
+   */
+  areTherePropertyRulesToApply(): boolean{
+    return (
+      this.settings.propertyRules.length > 0 &&
+      this.settings.propertyRules.some((propertyRule)=>propertyRule.propertyValue !=="" && propertyRule.folder !== "")
+    )
+  }
   /**
    * If there are no excluded folders, then we can move thing freely
    * @returns boolean
