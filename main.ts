@@ -8,6 +8,7 @@ import ruleMatcherUtil from "Utils/RuleMatcherUtil";
 import timerUtil from "Utils/TimerUtil";
 import * as obsidian from "obsidian";
 import projectMatcherUtil from "Utils/ProjectMatcherUtil";
+import { PropertyMatcherUtil } from "Utils/PropertyMatcherUtil";
 
 declare module "obsidian" {
   interface Workspace {
@@ -153,7 +154,8 @@ export default class AutoMoverPlugin extends obsidian.Plugin {
     // console.log("Moving file: ", file.path);
     const projectResult = await this.matchAndMoveByProject(file);
     if (projectResult !== null) return projectResult;
-
+    const propertyResult = await this.matchAndMoveByProperties(file);
+    if(propertyResult !== null) return propertyResult;
     const nameResult = await this.matchAndMoveByName(file);
     if (nameResult !== null) return nameResult;
 
@@ -250,12 +252,46 @@ export default class AutoMoverPlugin extends obsidian.Plugin {
     const finalDestinationPath = projectMatcherUtil.constructProjectDestinationPath(projectRule, rule.folder);
     return movingUtil.moveFile(file, finalDestinationPath);
   }
+  /**
+   * Matches files based on the value of the front matter properties of the 
+   * main and sub properties the user defined in settings. 
+   * if the main rule has no sub property rules, or there is no matching sub property rules
+   * the file moves to the main properties folder by default. 
+   * @param file - file to be moved and matched 
+   * @returns the outcome, or null if no rule matches
+   */
   async matchAndMoveByProperties(file:obsidian.TFile):Promise<MoveOutcome | null>{
+    // Check for the main property. 
     const cache = this.app.metadataCache.getFileCache(file);
     if(!cache || !cache.frontmatter) return null;
     if(!cache.frontmatter[this.settings.mainProperty]) return null; 
+    //Retrieve the value of the property from the note
     const main = cache.frontmatter[this.settings.mainProperty]
-    const mainPropRule = propertyMatcherUtils
+    //Get and Check for matching rules
+    const mainPropRule = PropertyMatcherUtil.getMatchingMainRule(main, this.settings.propertyRules)
+    if(!mainPropRule) return null;
+    //Retrieve the value of the sub property, defaulting to the main location if it doesnt have one. 
+    const sub = cache.frontmatter[this.settings.subProperty]
+    if(!sub){
+      loggerUtil.debug(`No ${this.settings.subProperty}, moving to ${main} folder`)
+      return movingUtil.moveFile(file, mainPropRule.folder)
+    }
+    //Checking if the main prop rule has sub rules, defaulting to its location if not. 
+    if(mainPropRule.rules.length == 0){
+      loggerUtil.debug(`${main} has no ${this.settings.subProperty} rules, moving to ${main.folder}.`)
+      return movingUtil.moveFile(file, mainPropRule.folder)
+    }
+    //Checking for and retrieving the sub rule. 
+    const subPropRule = PropertyMatcherUtil.getMatchingSubRule(sub, mainPropRule.rules)
+    //if no sub rule matches, defaulting to main
+    if (!subPropRule){
+      loggerUtil.debug(`${main} has no ${sub} rule, moving to ${main.folder}`)
+      return movingUtil.moveFile(file, mainPropRule.folder)
+    }
+    //if matching sub and main rules, combining folders using obsidians helper to remove excess "/"" if its already included in user defined paths
+    const destinationPath = obsidian.normalizePath(`${mainPropRule.folder}/${subPropRule.folder}`)
+    return movingUtil.moveFile(file, destinationPath)
+  
   }
   /**
    * Reloads the plugin settings from disk, merged on top of DEFAULT_SETTINGS.
