@@ -5,8 +5,8 @@ import { type App, PluginSettingTab, Setting } from "obsidian";
 import { exclusionSection } from "./ExclusionSection";
 import movingRuleSection from "./MovingRuleSection";
 import { tagSection } from "./TagSection";
-import { groupCollapsed } from "console";
 import { projectSection } from "./ProjectSection";
+import { propertySection } from "./PropertySection";
 
 export class SettingsTab extends PluginSettingTab {
   plugin: AutoMoverPlugin;
@@ -173,6 +173,6 @@ export class SettingsTab extends PluginSettingTab {
     tagSection(containerEl, this.plugin, this.display);
     exclusionSection(containerEl, this.plugin, this.display);
     projectSection(containerEl, this.plugin, this.display);
-
+    propertySection(containerEl, this.plugin, this.display)
   };
 }
